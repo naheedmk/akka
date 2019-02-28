@@ -19,8 +19,16 @@ object AkkaDisciplinePlugin extends AutoPlugin with ScalafixSupport {
 
   override def trigger: PluginTrigger = allRequirements
   override def requires: Plugins = JvmPlugin && ScalafixPlugin
-
   override lazy val projectSettings = disciplineSettings
+
+  /** The nightly coverage job sets `-Dakka.coverage.job=true`
+    * in order to aggregate specific modules vs all.
+    */
+  lazy val coverageJobEnabled: Boolean = {
+    val x = sys.props.getOrElse("akka.coverage.job", "false").toBoolean
+    println(s"coverageJobEnabled = $x")
+    x
+  }
 
   lazy val scalaFixSettings = Seq(
     Compile / scalacOptions += "-Yrangepos")

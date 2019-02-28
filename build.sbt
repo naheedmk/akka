@@ -56,29 +56,29 @@ lazy val aggregatedProjects: Seq[ProjectReference] = Seq(
   * - what may be removed for 2.6, e.g. camel, agent
   * - docs, protobuf, osgi (could?)
   * https://github.com/akka/akka/milestone/119 */
-lazy val scoverageNightly: Seq[ProjectReference] = Seq(
+lazy val aggregatedCoverage: Seq[ProjectReference] = Seq(
   actor, actorTests, 
   cluster, clusterMetrics, clusterSharding, clusterTools,
   /*contrib,
   distributedData,
-  
   multiNodeTestkit,
-  
   persistence, persistenceQuery, persistenceShared, persistenceTck,
-  
   slf4j,
   stream, streamTestkit, streamTests, streamTestsTck,
   testkit,
   actorTyped, actorTypedTests, actorTestkitTyped,
-  persistenceTyped,
-  clusterTyped, clusterShardingTyped,
+  persistenceTyped, clusterTyped, clusterShardingTyped,
   streamTyped,*/
   discovery)
+
+lazy val aggregated: Seq[ProjectReference] =
+  if (AkkaDisciplinePlugin.coverageJobEnabled) aggregatedCoverage
+  else aggregatedProjects
 
 lazy val root = Project(
   id = "akka",
   base = file(".")
-).aggregate(scoverageNightly: _*)
+).aggregate(aggregated: _*)
  .settings(rootSettings: _*)
  .settings(unidocRootIgnoreProjects :=
    (CrossVersion.partialVersion(scalaVersion.value) match {
