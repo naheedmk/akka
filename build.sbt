@@ -50,9 +50,30 @@ lazy val aggregatedProjects: Seq[ProjectReference] = Seq(
   discovery
 )
 
-// Temporary in this branch, which will be deleted. Testing jenkins.
+/** TODO add/fix remote, remoteTests
+  * TODO possibly add: benchJmh
+  * Does not include 
+  * - what may be removed for 2.6, e.g. camel, agent
+  * - docs, protobuf, osgi (could?)
+  * https://github.com/akka/akka/milestone/119 */
 lazy val scoverageNightly: Seq[ProjectReference] = Seq(
-  actor, actorTests, remote, remoteTests, cluster)
+  actor, actorTests, 
+  cluster, clusterMetrics, clusterSharding, clusterTools,
+  /*contrib,
+  distributedData,
+  
+  multiNodeTestkit,
+  
+  persistence, persistenceQuery, persistenceShared, persistenceTck,
+  
+  slf4j,
+  stream, streamTestkit, streamTests, streamTestsTck,
+  testkit,
+  actorTyped, actorTypedTests, actorTestkitTyped,
+  persistenceTyped,
+  clusterTyped, clusterShardingTyped,
+  streamTyped,*/
+  discovery)
 
 lazy val root = Project(
   id = "akka",
