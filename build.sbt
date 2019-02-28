@@ -50,26 +50,24 @@ lazy val aggregatedProjects: Seq[ProjectReference] = Seq(
   discovery
 )
 
-/** TODO add/fix remote, remoteTests
-  * TODO possibly add: benchJmh
+/** TODO add/fix remote, remoteTests coverage and include
   * Does not include 
-  * - what may be removed for 2.6, e.g. camel, agent
-  * - docs, protobuf, osgi (could?)
-  * https://github.com/akka/akka/milestone/119 */
+  * - planned removals in 2.6 https://github.com/akka/akka/milestone/119
+  * - docs, protobuf, benchJmh
+  */
 lazy val aggregatedCoverage: Seq[ProjectReference] = Seq(
   actor, actorTests, 
-  cluster, clusterMetrics, clusterSharding, clusterTools,
-  /*contrib,
-  distributedData,
-  multiNodeTestkit,
-  persistence, persistenceQuery, persistenceShared, persistenceTck,
-  slf4j,
+  cluster, clusterMetrics, clusterSharding, clusterTools, contrib,
+  discovery, distributedData, persistence,
+  slf4j)
+  /*multiNodeTestkit, osgi,
+  persistenceQuery, persistenceShared, persistenceTck,
   stream, streamTestkit, streamTests, streamTestsTck,
   testkit,
   actorTyped, actorTypedTests, actorTestkitTyped,
   persistenceTyped, clusterTyped, clusterShardingTyped,
   streamTyped,*/
-  discovery)
+  
 
 lazy val aggregated: Seq[ProjectReference] =
   if (AkkaDisciplinePlugin.coverageJobEnabled) aggregatedCoverage

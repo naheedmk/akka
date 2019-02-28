@@ -24,11 +24,8 @@ object AkkaDisciplinePlugin extends AutoPlugin with ScalafixSupport {
   /** The nightly coverage job sets `-Dakka.coverage.job=true`
     * in order to aggregate specific modules vs all.
     */
-  lazy val coverageJobEnabled: Boolean = {
-    val x = sys.props.getOrElse("akka.coverage.job", "false").toBoolean
-    println(s"coverageJobEnabled = $x")
-    x
-  }
+  lazy val coverageJobEnabled: Boolean =
+    sys.props.getOrElse("akka.coverage.job", "false").toBoolean
 
   lazy val scalaFixSettings = Seq(
     Compile / scalacOptions += "-Yrangepos")
