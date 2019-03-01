@@ -59,11 +59,12 @@ lazy val aggregatedCoverage: Seq[ProjectReference] = Seq(
   actor, actorTests, 
   cluster, clusterMetrics, clusterSharding, clusterTools, contrib,
   discovery, distributedData, persistence,
-  slf4j)
+  multiNodeTestkit,
+  slf4j, testkit)
   /*multiNodeTestkit, osgi,
   persistenceQuery, persistenceShared, persistenceTck,
   stream, streamTestkit, streamTests, streamTestsTck,
-  testkit,
+  
   actorTyped, actorTypedTests, actorTestkitTyped,
   persistenceTyped, clusterTyped, clusterShardingTyped,
   streamTyped,*/
