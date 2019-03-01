@@ -5,7 +5,7 @@
 package akka
 
 import sbt._
-import Keys.{scalacOptions, _}
+import Keys._
 import sbt.plugins.JvmPlugin
 
 /**
@@ -17,18 +17,43 @@ object AkkaDisciplinePlugin extends AutoPlugin with ScalafixSupport {
   import scoverage.ScoverageKeys._
   import scalafix.sbt.ScalafixPlugin
 
-  override def trigger: PluginTrigger = allRequirements
-  override def requires: Plugins = JvmPlugin && ScalafixPlugin
-  override lazy val projectSettings = disciplineSettings
-
-  /** The nightly coverage job sets `-Dakka.coverage.job=true`
-    * in order to aggregate specific modules vs all.
-    */
+  /** The nightly CI Scoverage job sets `-Dakka.coverage.job=true`. */
   lazy val coverageJobEnabled: Boolean =
     sys.props.getOrElse("akka.coverage.job", "false").toBoolean
 
+  override def trigger: PluginTrigger = allRequirements
+  override def requires: Plugins = JvmPlugin && ScalafixPlugin
+  override lazy val projectSettings = if (coverageJobEnabled) scoverageSettings else disciplineSettings
+
+  /** Declarative exclusion by specific modules to disable Scoverage:
+    * - planned removals in 2.6 https://github.com/akka/akka/milestone/119
+    * - docs, protobuf, benchJmh
+    */
+  lazy val coverageExclude =
+    if (coverageJobEnabled) Seq(
+      test in Test := {},
+      coverageEnabled := false)
+    else Nil
+
   lazy val scalaFixSettings = Seq(
     Compile / scalacOptions += "-Yrangepos")
+
+  private val coverageExcluding = settingKey[Boolean]("")
+  private val excludedDir = settingKey[Boolean]("Names of tests to be excluded. Not supported by MultiJVM tests. Example usage: -Dakka.test.names.exclude=TimingSpec")
+  private val excludedWildcard = settingKey[Boolean]("Tags of tests to be excluded. It will not be used if you specify -Dakka.test.tags.only. Example usage: -Dakka.test.tags.exclude=long-running")
+  private val coverageCheck = settingKey[Unit]("")
+
+
+  /**
+    * Temporarily exclude specific modules for Scoverage by passing a comma-separated
+    * list of module names, minus "akka-", using
+    * `-Dakka.coverage.exclude=osgi,slf4j` or wildcard
+    * `-Dakka.coverage.exclude=slf4j,stream*,persistence*`.
+    */
+  lazy val coverageJobExclusions =
+    Seq("akka") ++ TestExtras.Filter.systemPropertyAsSeq("akka.coverage.excludes").map(v => s"akka-$v")
+    
+  lazy val coverageJobExclusionsWildcards = coverageJobExclusions.collect { case v if v.endsWith("*") => v.replace("*", "") }
 
   lazy val scoverageSettings = Seq(
     coverageMinimum := 70,
@@ -37,7 +62,30 @@ object AkkaDisciplinePlugin extends AutoPlugin with ScalafixSupport {
     coverageHighlighting := {
       import sbt.librarymanagement.{ SemanticSelector, VersionNumber }
       !VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector("<=2.11.1"))
-    })
+    }) ++ {
+    if (coverageJobEnabled) Seq(
+      javaOptions in Test ++= Seq("-XX:+UseG1GC", "-Xmx4G", "-Xms4G"),
+      logLevel in ThisBuild := Level.Error,
+
+      excludedDir := coverageJobExclusions.contains(baseDirectory.value.getName),
+      excludedWildcard := coverageJobExclusionsWildcards.exists(baseDirectory.value.getName.contains),
+      coverageExcluding := {
+        val explicit = excludedDir.value
+        val wildcard = excludedWildcard.value
+        explicit || wildcard
+      },
+      coverageEnabled := !coverageExcluding.value,
+      coverageCheck := {
+        if (coverageEnabled.value) println(s"  Coverage Enabled for [${baseDirectory.value.getName}]")
+      },
+      Test / testOptions := {
+        val filters = if (coverageEnabled.value) Nil else Seq(Tests.Filter(s => s.endsWith("NOTONCOVERAGE")))
+        println(s"  Coverage Test / testOptions [$filters] for [${baseDirectory.value.getName}]")
+        filters
+      }
+    )
+    else Nil
+  }
 
   lazy val disciplineSettings =
     scalaFixSettings ++
