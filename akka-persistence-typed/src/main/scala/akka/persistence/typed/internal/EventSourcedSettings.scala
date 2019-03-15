@@ -40,6 +40,8 @@ import com.typesafe.config.Config
     val recoveryEventTimeout: FiniteDuration =
       journalConfig.getDuration("recovery-event-timeout", TimeUnit.MILLISECONDS).millis
 
+    verifySnapshotConfig(config, snapshotPluginId)
+
     EventSourcedSettings(
       stashCapacity = stashCapacity,
       stashOverflowStrategy,
@@ -49,10 +51,23 @@ import com.typesafe.config.Config
       snapshotPluginId)
   }
 
-  private[akka] final def journalConfigFor(config: Config, journalPluginId: String): Config = {
-    val defaultJournalPluginId = config.getString("akka.persistence.journal.plugin")
+  private def journalConfigFor(config: Config, journalPluginId: String): Config = {
+    def defaultJournalPluginId = config.getString("akka.persistence.journal.plugin") match {
+      case "" =>
+        throw new IllegalArgumentException(
+          s"Default journal plugin is not configured, " +
+          "see 'akka.persistence.journal.plugin' in reference.conf.")
+      case pluginId => pluginId
+    }
     val configPath = if (journalPluginId == "") defaultJournalPluginId else journalPluginId
+    if (!config.hasPath(configPath))
+      throw new IllegalArgumentException(s"Journal plugin [$configPath] is not configured.")
     config.getConfig(configPath).withFallback(config.getConfig(Persistence.JournalFallbackConfigPath))
+  }
+
+  private def verifySnapshotConfig(config: Config, snapshotPluginId: String): Unit = {
+    if (snapshotPluginId != "" && !config.hasPath(snapshotPluginId))
+      throw new IllegalArgumentException(s"Snapshot store plugin [$snapshotPluginId] is not configured.")
   }
 
 }
